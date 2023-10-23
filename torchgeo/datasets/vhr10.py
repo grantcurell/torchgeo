@@ -40,10 +40,7 @@ def convert_coco_poly_to_mask(
         mask = torch.as_tensor(mask, dtype=torch.uint8)
         mask = mask.any(dim=2)
         masks.append(mask)
-    if masks:
-        masks_tensor = torch.stack(masks, dim=0)
-    else:
-        masks_tensor = torch.zeros((0, height, width), dtype=torch.uint8)
+    masks_tensor = torch.stack(masks, dim=0)
     return masks_tensor
 
 
@@ -86,8 +83,7 @@ class ConvertCocoAnnotations:
 
         if "segmentation" in anno[0]:
             segmentations = [obj["segmentation"] for obj in anno]
-        else:
-            segmentations = []
+
         masks = convert_coco_poly_to_mask(segmentations, h, w)
 
         keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
@@ -257,8 +253,7 @@ class VHR10(NonGeoDataset):
             sample = self.coco_convert(sample)
             sample["labels"] = sample["label"]["labels"]
             sample["boxes"] = sample["label"]["boxes"]
-            if "masks" in sample["label"]:
-                sample["masks"] = sample["label"]["masks"]
+            sample["masks"] = sample["label"]["masks"]
             del sample["label"]
 
         if self.transforms is not None:
@@ -297,6 +292,7 @@ class VHR10(NonGeoDataset):
             tensor = torch.from_numpy(array)
             # Convert from HxWxC to CxHxW
             tensor = tensor.permute((2, 0, 1))
+            tensor = tensor.float() / tensor.max()
             return tensor
 
     def _load_target(self, id_: int) -> dict[str, Any]:
